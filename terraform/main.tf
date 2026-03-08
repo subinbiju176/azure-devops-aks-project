@@ -16,8 +16,8 @@ resource "azurerm_storage_account" "tfstate" {
 }
 
 resource "azurerm_storage_container" "tfstate" {
-  name                  = "tfstate"
-  storage_account_name  = azurerm_storage_account.tfstate.name
+  name                 = "tfstate"
+  storage_account_id   = azurerm_storage_account.tfstate.id
   container_access_type = "private"
 }
 
