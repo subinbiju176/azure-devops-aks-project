@@ -1,0 +1,43 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACR_NAME: devopsaksacr123
+  IMAGE_NAME: devopsapp
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Login to ACR
+      run: az acr login --name $ACR_NAME
+
+    - name: Build Docker image
+      run: |
+        docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }} ./app
+
+    - name: Push image
+      run: |
+        docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}
+
+    - name: Get AKS credentials
+      run: |
+        az aks get-credentials --resource-group devops-aks-rg --name devops-aks-cluster
+
+    - name: Update Kubernetes deployment
+      run: |
+        kubectl set image deployment/devopsapp-deployment \
+        devopsapp=$ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}
